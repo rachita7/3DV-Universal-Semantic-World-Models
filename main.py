@@ -30,12 +30,14 @@ from src.data.mesh import (
     run_subsample_points,
 )
 from src.data.projection import run_build_visibility
+from src.data.vggt_loader import run_build_vggt_visibility
 from src.features.dino_backbone import extract_all_frames as extract_vits16
 from src.features.dinotxt_features import extract_all_frames as extract_dinotxt
 from src.features.dinotxt_text import build_class_embeddings
 from src.segmentation.classify import run_segmentation
 from src.segmentation.metrics import run_ablation, run_evaluation
 from src.utils.io import save_settings_snapshot
+from src.viz.pca_video import run_pca_video
 from src.viz.segmentation_viz import run_segmentation_viz
 from src.viz.variance_heatmap import run_variance_viz
 
@@ -58,7 +60,10 @@ def run_step(step: int, force: bool) -> None:
         run_gt_viz(force=force)
 
     elif step == 2:
-        run_build_visibility(force=force)
+        if cfg.VISIBILITY_SOURCE == "vggt":
+            run_build_vggt_visibility(force=force)
+        else:
+            run_build_visibility(force=force)
 
     elif step == 3:
         extract_vits16(force=force)
@@ -102,6 +107,9 @@ def run_step(step: int, force: bool) -> None:
         run_segmentation(agg_path, force=force)
         run_evaluation(method, subsample_idx=subsample_idx)
         run_segmentation_viz(method, force=force)
+
+    elif step == 10:
+        run_pca_video(force=force)
 
     else:
         raise ValueError(f"Unknown step: {step}")

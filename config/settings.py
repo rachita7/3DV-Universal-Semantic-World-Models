@@ -12,6 +12,13 @@ CAM_PARAMS_PATH = f"{REPLICA_ROOT}/cam_params.json"
 TRAJ_PATH = f"{REPLICA_ROOT}/{ROOM}/traj.txt"
 FRAMES_DIR = f"{REPLICA_ROOT}/{ROOM}/results"
 
+# --- visibility source (step 2) ---
+# "replica" projects sampled mesh points using depth + trajectory.
+# "vggt" reads COLMAP-style binaries from VGGT instead (geometry only, no GT labels).
+VISIBILITY_SOURCE = "replica"  # "replica" | "vggt"
+VGGT_IMAGES_BIN = "VGGT Output/images.bin"
+VGGT_POINTS3D_BIN = "VGGT Output/points3D.bin"
+
 # Checkpoints
 VITS16_WEIGHTS = f"{PRETRAINED_ROOT}/dinov3_vits16_pretrain_lvd1689m-08c60483.pth"
 VITL16_WEIGHTS = f"{PRETRAINED_ROOT}/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth"
@@ -20,7 +27,7 @@ DINOTXT_WEIGHTS = (
 )
 
 # --- pipeline control ---
-STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+STEPS = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # add 10 to also render the PCA comparison video
 FORCE_RECOMPUTE = False
 RANDOM_SEED = 42
 
@@ -50,11 +57,12 @@ VITS16_FEATURE_DIM = 384
 DINOTXT_FEATURE_DIM = 1024  # aligned patch token dim (second half of 2048-d joint embedding)
 
 # --- aggregation ---
-AGGREGATION_METHOD = "sam_slerp"  # "mean" | "slerp" | "frechet" | "weighted_slerp"
+# Which method(s) run is controlled by ABLATION_METHODS (see bottom of file);
+# AGGREGATION_METHOD is derived from it and used by single-method steps / viz.
 FRECHET_MAX_ITER = 50
 FRECHET_TOL = 1e-6
 COMPUTE_PAIRWISE = False  # slow; dispersion-only is enough for subsampling
-# Per-point methods (slerp / frechet / weighted_slerp) gather observations in chunks.
+# Per-point methods (sam_slerp / weighted_slerp) gather observations in chunks.
 # Higher = fewer disk passes but more RAM (~obs × 1024 × 4 bytes per chunk).
 # 24 GB RAM: 1_500_000 (~6 GB buffer, ~14 chunks). 32 GB+: try 2_000_000.
 AGGREGATION_MAX_OBS_PER_CHUNK = 1_500_000
@@ -151,5 +159,23 @@ SAM_NMS_THRESHOLD = 0.8  # suppress near-duplicate masks by overlap
 SAM_USE_AMP = True  # fp16 autocast during SAM inference (needed to fit ViT-H in 6 GB VRAM)
 SAM_OVERLAP_SLERP = False  # Pe3R-style intra-frame overlap adjustment between masks
 
-# --- ablation (phase 4) ---
-ABLATION_METHODS = ["mean", "weighted_slerp", "frechet", "sam_slerp"]
+# --- methods: the single knob for which aggregation method(s) run ---
+# Options per entry: "mean" | "weighted_slerp" | "frechet" | "sam_slerp".
+#   - One entry   -> only that method runs (steps 7 & 9).
+#   - 2+ entries  -> full ablation: every listed method is aggregated, segmented,
+#                    scored, and compared (runs when step 9 is in STEPS).
+# The FIRST entry is the "primary" method used for single-method steps and viz.
+ABLATION_METHODS = ["mean", "weighted_slerp", "sam_slerp"]
+AGGREGATION_METHOD = ABLATION_METHODS[0]  # derived; don't set this directly
+
+# --- PCA comparison video (step 10 viz) ---
+# Compares the dense per-frame PCA against multi-view aggregated embeddings
+# projected back into each frame. Provide 1 or 2 method names (2 → 2x2 layout
+# sharing a PCA basis). None → [AGGREGATION_METHOD].
+PCA_VIDEO_METHODS = None
+PCA_VIDEO_DENSE_SOURCE = "dinotxt"  # "dinotxt" | "vits16" for the dense panel
+PCA_VIDEO_FPS = 5
+PCA_VIDEO_FRAME_H = 480  # per-panel height in px
+PCA_VIDEO_MAX_FRAMES = None  # None = all frames in the trajectory
+PCA_VIDEO_FRAME_STRIDE = 1  # render every Nth frame
+PCA_VIDEO_FIT_FRAMES = 40  # frames sampled to fit the dense PCA basis
