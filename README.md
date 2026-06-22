@@ -58,7 +58,7 @@ Posed RGB-D frames plus a semantically-labelled mesh — used for feature extrac
 
 1. Create the data folder at the repo root: `mkdir dataset`
 2. Download the prepared bundle: **[Replica (Polybox)](https://polybox.ethz.ch/index.php/s/TZmTjBJ6dCbwG29)**
-3. Unpack it into `dataset/replica/` so it matches the layout below:
+3. Unpack it into `dataset/` so it matches the layout below:
 
 ```
 dataset/replica/
