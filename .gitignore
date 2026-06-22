@@ -1,0 +1,6 @@
+/dataset
+/outputs
+/pretrainedmodels
+/test/test_outputs/*
+!/test/test_outputs/.gitkeep
+/experimental
