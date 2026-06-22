@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semantic-flickering"
+version = "0.1.0"
+description = "DINOv3 semantic flickering research on Replica"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "opencv-python>=4.8.0",
+    "Pillow>=10.0.0",
+    "trimesh>=4.0.0",
+    "matplotlib>=3.7.0",
+    "tqdm>=4.65.0",
+    "open3d>=0.17.0",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["config*", "src*"]
